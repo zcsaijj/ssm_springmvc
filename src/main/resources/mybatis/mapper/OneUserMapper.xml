@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bb.dao.OneUserDao">
+   <!--resultmap:映射实体类和字段之间的一一对应关系-->
+    <resultMap id="userMap" type="cn.bb.model.OneUser">
+        <id property="id" column="id" />
+        <result property="username" column="username" />
+        <result property="password" column="password" />
+        <result property="sex" column="sex" />
+        <result property="role" column="role" />
+        <!--多对多关系映射-->
+        <collection property="roles" ofType="cn.bb.model.OneRole">
+            <id property="roleid" column="roleid" />
+            <result property="rolename" column="rolename" />
+        </collection>
+    </resultMap>
+    <!--用户添加-->
+    <insert id="addUser" parameterType="cn.bb.model.OneUser">
+        insert into ONE_USER (id,username,password,sex)
+        values (#{id},#{username},#{password},#{sex})
+    </insert>
+    <insert id="insertUserRole" parameterType="java.util.List">
+        insert into ONE_USERROLE (userid,roleid)
+        <foreach collection="list" item="item" separator="UNION ALL">
+          select #{item.userId},#{item.roleId} from dual
+        </foreach>
+        <!--<foreach collection="list" item="item" separator=",">
+            (#{item.userId},#{item.roleId})
+        </foreach>-->
+    </insert>
+    <!--用户查询-->
+    <select id="findUserByName" parameterType="String" resultType="cn.bb.model.OneUser">
+      select * from ONE_USER where username = #{username}
+    </select>
+    <select id="findUser" resultMap="userMap">
+        select u.id,u.username,u.password,u.sex,roles.roleid,roles.rolename as rolename from
+        ONE_USER u
+        left join ONE_USERROLE ur on u.id = ur.userid
+        left join ONE_ROLE roles on roles.roleid = ur.roleid
+    </select>
+    <!--用户修改-->
+    <update id="updateUser" parameterType="cn.bb.model.OneUser">
+        update ONE_USER
+        set username = #{username},password = #{password},sex = #{sex}
+        where id =#{id}
+    </update>
+    <!--用户删除-->
+    <delete id="deleteUser" parameterType="String">
+        delete from ONE_USER where id in
+        <foreach collection="array" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteUserRole" parameterType="String">
+        delete from ONE_USERROLE
+        where userid in
+        <foreach collection="array" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!--表单赋值-->
+    <select id="getUserById" parameterType="int" resultMap="userMap">
+        select u.id,u.username,u.password,u.sex,roles.roleid,roles.rolename as rolename from
+        ONE_USER u
+        left join ONE_USERROLE ur on u.id = ur.userid
+        left join ONE_ROLE roles on roles.roleid = ur.roleid
+        where   u.id = #{id}
+    </select>
+</mapper>
